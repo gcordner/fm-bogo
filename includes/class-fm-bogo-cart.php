@@ -2,14 +2,14 @@
 /**
  * Manages free item addition and removal in the cart.
  *
- * @package Plk_Bogo
+ * @package Fm_Bogo
  */
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class Plk_Bogo_Cart {
+class Fm_Bogo_Cart {
 
 	private static $is_processing = false;
 
@@ -23,18 +23,18 @@ class Plk_Bogo_Cart {
 	 * Returns all active promos, cached in a transient.
 	 */
 	public static function get_active_promos() {
-		$cached = get_transient( 'plk_bogo_active_promos' );
+		$cached = get_transient( 'fm_bogo_active_promos' );
 		if ( false !== $cached ) {
 			return $cached;
 		}
 
 		$posts = get_posts( array(
-			'post_type'      => 'plk_bogo_promo',
+			'post_type'      => 'fm_bogo_promo',
 			'post_status'    => 'publish',
 			'posts_per_page' => -1,
 			'meta_query'     => array(
 				array(
-					'key'   => '_plk_bogo_active',
+					'key'   => '_fm_bogo_active',
 					'value' => '1',
 				),
 			),
@@ -42,8 +42,8 @@ class Plk_Bogo_Cart {
 
 		$promos = array();
 		foreach ( $posts as $post ) {
-			$max_free  = get_post_meta( $post->ID, '_plk_bogo_max_free_items', true );
-			$used      = (int) get_post_meta( $post->ID, '_plk_bogo_free_items_used', true );
+			$max_free  = get_post_meta( $post->ID, '_fm_bogo_max_free_items', true );
+			$used      = (int) get_post_meta( $post->ID, '_fm_bogo_free_items_used', true );
 			$remaining = '' === $max_free ? PHP_INT_MAX : max( 0, (int) $max_free - $used );
 
 			if ( $remaining <= 0 ) {
@@ -51,20 +51,20 @@ class Plk_Bogo_Cart {
 			}
 
 			$promos[] = array(
-				'id'               => $post->ID,
-				'label'            => get_post_meta( $post->ID, '_plk_bogo_promo_label', true ) ?: $post->post_title,
-				'qualifying_type'  => get_post_meta( $post->ID, '_plk_bogo_qualifying_type', true ) ?: 'products',
-				'qualifying_ids'   => get_post_meta( $post->ID, '_plk_bogo_qualifying_ids', true ) ?: array(),
-				'qualifying_cat'   => (int) get_post_meta( $post->ID, '_plk_bogo_qualifying_category', true ),
-				'free_product_id'  => (int) get_post_meta( $post->ID, '_plk_bogo_free_product_id', true ),
-				'buy_qty'          => (int) get_post_meta( $post->ID, '_plk_bogo_buy_qty', true ) ?: 1,
-				'get_qty'          => (int) get_post_meta( $post->ID, '_plk_bogo_get_qty', true ) ?: 1,
-				'recursive'        => '1' === get_post_meta( $post->ID, '_plk_bogo_recursive', true ),
-				'remaining_quota'  => $remaining,
+				'id'              => $post->ID,
+				'label'           => get_post_meta( $post->ID, '_fm_bogo_promo_label', true ) ?: $post->post_title,
+				'qualifying_type' => get_post_meta( $post->ID, '_fm_bogo_qualifying_type', true ) ?: 'products',
+				'qualifying_ids'  => get_post_meta( $post->ID, '_fm_bogo_qualifying_ids', true ) ?: array(),
+				'qualifying_cat'  => (int) get_post_meta( $post->ID, '_fm_bogo_qualifying_category', true ),
+				'free_product_id' => (int) get_post_meta( $post->ID, '_fm_bogo_free_product_id', true ),
+				'buy_qty'         => (int) get_post_meta( $post->ID, '_fm_bogo_buy_qty', true ) ?: 1,
+				'get_qty'         => (int) get_post_meta( $post->ID, '_fm_bogo_get_qty', true ) ?: 1,
+				'recursive'       => '1' === get_post_meta( $post->ID, '_fm_bogo_recursive', true ),
+				'remaining_quota' => $remaining,
 			);
 		}
 
-		set_transient( 'plk_bogo_active_promos', $promos, HOUR_IN_SECONDS );
+		set_transient( 'fm_bogo_active_promos', $promos, HOUR_IN_SECONDS );
 		return $promos;
 	}
 
@@ -80,12 +80,11 @@ class Plk_Bogo_Cart {
 		$cart   = WC()->cart;
 		$promos = self::get_active_promos();
 
-		// Build a map of what's currently in cart.
 		// existing_free[ promo_id ] = array of cart_item_keys for free items of that promo.
 		$existing_free = array();
 		foreach ( $cart->get_cart() as $key => $item ) {
-			if ( ! empty( $item['plk_bogo_free'] ) ) {
-				$pid = (int) $item['plk_bogo_free'];
+			if ( ! empty( $item['fm_bogo_free'] ) ) {
+				$pid = (int) $item['fm_bogo_free'];
 				if ( ! isset( $existing_free[ $pid ] ) ) {
 					$existing_free[ $pid ] = array();
 				}
@@ -107,29 +106,28 @@ class Plk_Bogo_Cart {
 				continue;
 			}
 
-			// Remove all existing free items for this promo, then re-add at desired qty.
 			foreach ( $current_keys as $key ) {
 				$cart->remove_cart_item( $key );
 			}
 
 			if ( $desired_qty > 0 ) {
-				$added = $cart->add_to_cart(
+				$cart->add_to_cart(
 					$promo['free_product_id'],
 					$desired_qty,
 					0,
 					array(),
 					array(
-						'plk_bogo_free'       => $promo['id'],
-						'plk_bogo_promo_label' => $promo['label'],
+						'fm_bogo_free'        => $promo['id'],
+						'fm_bogo_promo_label' => $promo['label'],
 					)
 				);
 			}
 		}
 
-		// Remove free items for promos that are no longer active or no longer in cart.
+		// Remove free items for promos that are no longer active.
 		$active_ids = wp_list_pluck( $promos, 'id' );
 		foreach ( $cart->get_cart() as $key => $item ) {
-			if ( ! empty( $item['plk_bogo_free'] ) && ! in_array( (int) $item['plk_bogo_free'], $active_ids, true ) ) {
+			if ( ! empty( $item['fm_bogo_free'] ) && ! in_array( (int) $item['fm_bogo_free'], $active_ids, true ) ) {
 				$cart->remove_cart_item( $key );
 			}
 		}
@@ -144,8 +142,7 @@ class Plk_Bogo_Cart {
 		$qualifying_qty = 0;
 
 		foreach ( $cart->get_cart() as $item ) {
-			// Don't count free items as qualifying.
-			if ( ! empty( $item['plk_bogo_free'] ) ) {
+			if ( ! empty( $item['fm_bogo_free'] ) ) {
 				continue;
 			}
 
@@ -176,7 +173,6 @@ class Plk_Bogo_Cart {
 			return has_term( $promo['qualifying_cat'], 'product_cat', $product_id );
 		}
 
-		// Products mode: check product ID and parent (for variations).
 		$ids_to_check = array_map( 'intval', (array) $promo['qualifying_ids'] );
 		if ( in_array( $product_id, $ids_to_check, true ) ) {
 			return true;
@@ -189,12 +185,11 @@ class Plk_Bogo_Cart {
 	}
 
 	/**
-	 * Prevent customers from manually adding a free-flagged product via URL tricks.
-	 * (The flag is set server-side on add_to_cart calls from sync_free_items only.)
+	 * Strips fm_bogo_free from customer-initiated add_to_cart calls.
 	 */
 	public static function block_manual_free_add( $cart_item_data, $product_id ) {
-		unset( $cart_item_data['plk_bogo_free'] );
-		unset( $cart_item_data['plk_bogo_promo_label'] );
+		unset( $cart_item_data['fm_bogo_free'] );
+		unset( $cart_item_data['fm_bogo_promo_label'] );
 		return $cart_item_data;
 	}
 }

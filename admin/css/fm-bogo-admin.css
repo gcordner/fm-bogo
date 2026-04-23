@@ -1,51 +1,51 @@
-.plk-bogo-meta-box {
+.fm-bogo-meta-box {
 	max-width: 800px;
 }
 
-.plk-bogo-field {
+.fm-bogo-field {
 	margin-bottom: 1.5em;
 }
 
-.plk-bogo-field label {
+.fm-bogo-field label {
 	display: block;
 	font-weight: 600;
 	margin-bottom: 0.4em;
 }
 
-.plk-bogo-field--active label {
+.fm-bogo-field--active label {
 	font-weight: normal;
 }
 
-.plk-bogo-field .description {
+.fm-bogo-field .description {
 	color: #646970;
 	font-style: normal;
 	margin-top: 0.4em;
 }
 
-.plk-bogo-radio-group {
+.fm-bogo-radio-group {
 	display: flex;
 	gap: 1.5em;
 	margin-bottom: 0.75em;
 }
 
-.plk-bogo-radio-group label {
+.fm-bogo-radio-group label {
 	font-weight: normal;
 	margin-bottom: 0;
 }
 
-.plk-bogo-field--inline {
+.fm-bogo-field--inline {
 	display: flex;
 	gap: 2em;
 	flex-wrap: wrap;
 }
 
-.plk-bogo-field--inline > div {
+.fm-bogo-field--inline > div {
 	display: flex;
 	flex-direction: column;
 	gap: 0.3em;
 }
 
-.plk-bogo-field--inline label {
+.fm-bogo-field--inline label {
 	font-weight: 600;
 }
 

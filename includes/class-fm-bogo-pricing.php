@@ -2,14 +2,14 @@
 /**
  * Sets free items to $0 during cart total calculation.
  *
- * @package Plk_Bogo
+ * @package Fm_Bogo
  */
 
 if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-class Plk_Bogo_Pricing {
+class Fm_Bogo_Pricing {
 
 	public static function init() {
 		add_action( 'woocommerce_before_calculate_totals', array( __CLASS__, 'zero_free_items' ), 10 );
@@ -21,7 +21,7 @@ class Plk_Bogo_Pricing {
 		}
 
 		foreach ( $cart->get_cart() as $cart_item ) {
-			if ( ! empty( $cart_item['plk_bogo_free'] ) ) {
+			if ( ! empty( $cart_item['fm_bogo_free'] ) ) {
 				$cart_item['data']->set_price( 0 );
 			}
 		}

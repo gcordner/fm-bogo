@@ -3,21 +3,19 @@
 	'use strict';
 
 	function toggleQualifyingFields() {
-		var type = $( 'input[name="plk_bogo_qualifying_type"]:checked' ).val();
+		var type = $( 'input[name="fm_bogo_qualifying_type"]:checked' ).val();
 		if ( 'category' === type ) {
-			$( '.plk-bogo-qualifying-products' ).hide();
-			$( '.plk-bogo-qualifying-category' ).show();
+			$( '.fm-bogo-qualifying-products' ).hide();
+			$( '.fm-bogo-qualifying-category' ).show();
 		} else {
-			$( '.plk-bogo-qualifying-products' ).show();
-			$( '.plk-bogo-qualifying-category' ).hide();
+			$( '.fm-bogo-qualifying-products' ).show();
+			$( '.fm-bogo-qualifying-category' ).hide();
 		}
 	}
 
 	$( document ).ready( function () {
-		// Initialize qualifying type toggle.
-		$( 'input[name="plk_bogo_qualifying_type"]' ).on( 'change', toggleQualifyingFields );
+		$( 'input[name="fm_bogo_qualifying_type"]' ).on( 'change', toggleQualifyingFields );
 
-		// Initialize selectWoo on product search fields.
 		$( '.wc-product-search' ).filter( ':not(.select2-hidden-accessible)' ).each( function () {
 			var $el = $( this );
 			$el.selectWoo( {
