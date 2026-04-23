@@ -1,0 +1,54 @@
+.plk-bogo-meta-box {
+	max-width: 800px;
+}
+
+.plk-bogo-field {
+	margin-bottom: 1.5em;
+}
+
+.plk-bogo-field label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.4em;
+}
+
+.plk-bogo-field--active label {
+	font-weight: normal;
+}
+
+.plk-bogo-field .description {
+	color: #646970;
+	font-style: normal;
+	margin-top: 0.4em;
+}
+
+.plk-bogo-radio-group {
+	display: flex;
+	gap: 1.5em;
+	margin-bottom: 0.75em;
+}
+
+.plk-bogo-radio-group label {
+	font-weight: normal;
+	margin-bottom: 0;
+}
+
+.plk-bogo-field--inline {
+	display: flex;
+	gap: 2em;
+	flex-wrap: wrap;
+}
+
+.plk-bogo-field--inline > div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3em;
+}
+
+.plk-bogo-field--inline label {
+	font-weight: 600;
+}
+
+.required {
+	color: #d63638;
+}
