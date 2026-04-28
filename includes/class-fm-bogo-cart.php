@@ -12,11 +12,27 @@ if ( ! defined( 'WPINC' ) ) {
 class Fm_Bogo_Cart {
 
 	private static $is_processing = false;
+	private static $is_adding_free = false;
 
 	public static function init() {
-		add_action( 'woocommerce_cart_updated', array( __CLASS__, 'sync_free_items' ) );
+		add_action( 'woocommerce_add_to_cart', array( __CLASS__, 'sync_free_items' ) );
+		add_action( 'woocommerce_cart_item_removed', array( __CLASS__, 'sync_free_items' ) );
 		add_action( 'woocommerce_after_cart_item_quantity_update', array( __CLASS__, 'sync_free_items' ) );
 		add_filter( 'woocommerce_add_cart_item_data', array( __CLASS__, 'block_manual_free_add' ), 10, 2 );
+		add_filter( 'woocommerce_get_cart_item_from_session', array( __CLASS__, 'restore_free_flag_from_session' ), 10, 2 );
+	}
+
+	/**
+	 * Explicitly restores fm_bogo_free flag from session data on every page load.
+	 * WooCommerce preserves all cart item keys, but this makes the intent explicit
+	 * and guards against any plugin that might strip unknown keys.
+	 */
+	public static function restore_free_flag_from_session( $cart_item, $values ) {
+		if ( ! empty( $values['fm_bogo_free'] ) ) {
+			$cart_item['fm_bogo_free']        = $values['fm_bogo_free'];
+			$cart_item['fm_bogo_promo_label'] = $values['fm_bogo_promo_label'] ?? '';
+		}
+		return $cart_item;
 	}
 
 	/**
@@ -75,6 +91,12 @@ class Fm_Bogo_Cart {
 		if ( self::$is_processing ) {
 			return;
 		}
+
+		// Guard against running before the cart is ready.
+		if ( ! WC()->cart ) {
+			return;
+		}
+
 		self::$is_processing = true;
 
 		$cart   = WC()->cart;
@@ -99,18 +121,22 @@ class Fm_Bogo_Cart {
 			$current_keys = $existing_free[ $promo['id'] ] ?? array();
 			$current_qty  = 0;
 			foreach ( $current_keys as $key ) {
-				$current_qty += (int) $cart->cart_contents[ $key ]['quantity'];
+				if ( isset( $cart->cart_contents[ $key ] ) ) {
+					$current_qty += (int) $cart->cart_contents[ $key ]['quantity'];
+				}
 			}
 
 			if ( $desired_qty === $current_qty ) {
 				continue;
 			}
 
+			// Remove existing free items for this promo, then re-add at the correct qty.
 			foreach ( $current_keys as $key ) {
 				$cart->remove_cart_item( $key );
 			}
 
 			if ( $desired_qty > 0 ) {
+				self::$is_adding_free = true;
 				$cart->add_to_cart(
 					$promo['free_product_id'],
 					$desired_qty,
@@ -121,10 +147,11 @@ class Fm_Bogo_Cart {
 						'fm_bogo_promo_label' => $promo['label'],
 					)
 				);
+				self::$is_adding_free = false;
 			}
 		}
 
-		// Remove free items for promos that are no longer active.
+		// Remove free items whose promo is no longer active.
 		$active_ids = wp_list_pluck( $promos, 'id' );
 		foreach ( $cart->get_cart() as $key => $item ) {
 			if ( ! empty( $item['fm_bogo_free'] ) && ! in_array( (int) $item['fm_bogo_free'], $active_ids, true ) ) {
@@ -142,6 +169,7 @@ class Fm_Bogo_Cart {
 		$qualifying_qty = 0;
 
 		foreach ( $cart->get_cart() as $item ) {
+			// Never count free items as qualifying.
 			if ( ! empty( $item['fm_bogo_free'] ) ) {
 				continue;
 			}
@@ -156,8 +184,7 @@ class Fm_Bogo_Cart {
 		}
 
 		if ( $promo['recursive'] ) {
-			$sets = (int) floor( $qualifying_qty / $promo['buy_qty'] );
-			return $sets * $promo['get_qty'];
+			return (int) floor( $qualifying_qty / $promo['buy_qty'] ) * $promo['get_qty'];
 		}
 
 		return $promo['get_qty'];
@@ -186,8 +213,12 @@ class Fm_Bogo_Cart {
 
 	/**
 	 * Strips fm_bogo_free from customer-initiated add_to_cart calls.
+	 * Allows our own internal calls through via the $is_adding_free flag.
 	 */
 	public static function block_manual_free_add( $cart_item_data, $product_id ) {
+		if ( self::$is_adding_free ) {
+			return $cart_item_data;
+		}
 		unset( $cart_item_data['fm_bogo_free'] );
 		unset( $cart_item_data['fm_bogo_promo_label'] );
 		return $cart_item_data;
