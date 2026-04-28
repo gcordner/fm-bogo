@@ -76,7 +76,7 @@ class Fm_Bogo_Admin {
 			foreach ( $qualifying_ids as $pid ) {
 				$product = wc_get_product( $pid );
 				if ( $product ) {
-					$qualifying_products[ $pid ] = $product->get_formatted_name();
+					$qualifying_products[ $pid ] = wp_strip_all_tags( $product->get_formatted_name() );
 				}
 			}
 		}
@@ -85,7 +85,7 @@ class Fm_Bogo_Admin {
 		if ( $free_product_id ) {
 			$free_product = wc_get_product( $free_product_id );
 			if ( $free_product ) {
-				$free_product_name = $free_product->get_formatted_name();
+				$free_product_name = wp_strip_all_tags( $free_product->get_formatted_name() );
 			}
 		}
 
