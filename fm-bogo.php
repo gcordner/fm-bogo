@@ -5,7 +5,7 @@
  * @wordpress-plugin
  * Plugin Name:       FM BOGO
  * Description:       Automatic BOGO promotions for WooCommerce. Adds free products to cart when qualifying products are purchased.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Author:            Geoff Cordner
  * License:           GPL-2.0+
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
@@ -19,7 +19,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-define( 'FM_BOGO_VERSION', '1.0.0' );
+define( 'FM_BOGO_VERSION', '1.1.0' );
 define( 'FM_BOGO_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FM_BOGO_URL', plugin_dir_url( __FILE__ ) );
 
